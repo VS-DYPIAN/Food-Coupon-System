@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Admin Panel</a>
+            <div class="d-flex">
+                <span class="navbar-text me-3">Welcome, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Page Header -->
+        <header class="mb-4">
+            <h1 class="text-center">Vendor Dashboard</h1>
+            <hr>
+        </header>
+
+        <!-- Redeemed Coupons Section -->
+        <section class="mb-5">
+            <h3>Redeemed Coupons</h3>
+            <ul class="list-group">
+                {% for coupon in redeemed_coupons %}
+                <li class="list-group-item">
+                    Code: {{ coupon.code }} - Value: ₹{{ coupon.value }} - Redeemed At: {{ coupon.redeemed_at }} by {{coupon.allocated_to}}
+                </li>
+                {% empty %}
+                <li class="list-group-item">No coupons redeemed.</li>
+                {% endfor %}
+            </ul>
+        </section>
+       
+        <!-- Display Total Spent Money -->
+        
+        <section class="mb-5">
+            <h3>Transaction history</h3>
+            <ul class="list-group">
+                {% for m in wallet %}
+                <li class="list-group-item">
+                    Amount: ₹{{ m.spent }} received from {{ m.user }} 
+                </li>
+                {% empty %}
+                <li class="list-group-item">No transaction yet.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+
+        <!-- Coupon Section -->
+        <section class="mb-5">
+            <h2>Coupons</h2>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Value</th>
+                        <th>Redeemed</th>
+                        <th>allocated_to</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coupon in coupons %}
+                    <tr>
+                        <td>{{ coupon.code }}</td>
+                        <td>{{ coupon.value }}</td>
+                        <td>{{ coupon.redeemed|yesno:"Yes,No" }}</td>
+                        <td>{{ coupon.allocated_to }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No coupons found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        
+    <!-- Footer -->
+    <footer class="text-center mt-5 mb-3">
+        <small>&copy; {{ now|date:"Y" }} Coupon Management System</small>
+    </footer>
+</body>
+</html>

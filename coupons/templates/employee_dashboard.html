@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Employee Dashboard</a>
+            <div class="d-flex">
+                <span class="navbar-text me-3">Welcome, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Page Header -->
+        <header class="mb-4">
+            <h1 class="text-center">Welcome, {{ user.username }}</h1>
+            <hr>
+        </header>
+
+        <!-- Display Wallet Balance -->
+        <div class="alert alert-info text-center">
+            <h4>Wallet Balance : ₹<span id="wallet-balance">{{ wallet.balance }}</span></h4>
+        </div>
+        
+
+        <!-- Spend Money Section -->
+        <section class="mb-5 text-center">
+            <form id="spend-form">
+                <input type="number" id="spend-amount" placeholder="Enter amount" required>
+                <button type="submit">Spend</button>
+            </form>
+            
+            <!-- Ensure CSRF token is available -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            
+        </section>
+
+        <!-- Avail Coupon Button -->
+        <div class="text-center mt-4">
+            <a href="{% url 'avail_coupons' %}" class="btn btn-success">Avail Coupon</a>
+        </div>
+
+        <!-- Available Coupons Section -->
+        <section class="mb-5">
+            <h3>Available Coupons</h3>
+            <ul class="list-group">
+                {% for coupon in available_coupons %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Code: {{ coupon.code }} - Value: ₹{{ coupon.value }}
+                    <button class="btn btn-primary btn-sm redeem-btn" data-coupon-id="{{ coupon.id }}">Redeem</button>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No coupons available.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <!-- Redeemed Coupons Section -->
+        <section class="mb-5">
+            <h3>Redeemed Coupons</h3>
+            <ul class="list-group">
+                {% for coupon in redeemed_coupons %}
+                <li class="list-group-item">
+                    Code: {{ coupon.code }} - Value: ₹{{ coupon.value }} - Redeemed At: {{ coupon.redeemed_at }}
+                </li>
+                {% empty %}
+                <li class="list-group-item">No coupons redeemed.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-5 mb-3">
+        <small>&copy; {{ now|date:"Y" }} Coupon Management System</small>
+    </footer>
+
+    <!-- Script to handle Spending & Redeem actions -->
+    <script>
+        document.querySelectorAll('.redeem-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const couponId = this.getAttribute('data-coupon-id');
+                fetch(`/coupons/redeem-coupon/${couponId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Something went wrong');
+                    }
+                });
+            });
+        });
+
+        document.getElementById('spend-form').addEventListener('submit', function(event) {
+    event.preventDefault();  // Prevent page reload
+
+    const amount = document.getElementById('spend-amount').value;
+
+    fetch('/coupons/wallet/spend-money/', {  // Ensure correct URL
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,  // Fix CSRF token retrieval
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount: amount })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            document.getElementById('wallet-balance').innerText = data.new_balance;
+        } else {
+            alert(data.error || 'Something went wrong');
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+
+    </script>
+</body>
+</html>
